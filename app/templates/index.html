@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <ul class="nav nav-pills todo-nav">
+                        <li role="presentation" class="nav-item all-task active"><a href="{{ url_for('main.index') }}" class="nav-link">All</a></li>
+                        <li role="presentation" class="nav-item active-task"><a href="{{ url_for('main.complete') }}" class="nav-link">Completed</a></li>
+                        <li role="presentation" class="nav-item completed-task"><a href="{{ url_for('main.incomplete') }}" class="nav-link">Incomplete</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <a href="{{ url_for('main.add') }}" class="btn btn-primary">Add New Assessment</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="todo-list">
+                    {% for assessment in assessments %}
+                        <div class="todo-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span>{{ assessment.title[:50] }} - ( {{ assessment.module_code[:20] }} )</span>
+
+                                {% if assessment.completed %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Incomplete</span>
+                                {% endif %}
+                            </div>
+
+                                <div class="action-icons">
+                                    <a href="javascript:void(0)" data-id="{{assessment.id}}" class="btn btn-secondary btn-sm view_details" title="View Assessment Details">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </a>
+                                    {% if not assessment.completed %}
+                                        <a href="{{ url_for('main.edit', id=assessment.id) }}" class="btn btn-warning btn-sm" title="Edit Assessment">
+                                            <i class="fa-solid fa-pencil"></i>
+                                        </a>
+                                        <a href="{{ url_for('main.mark_complete', id=assessment.id) }}" class="btn btn-success btn-sm" title="Mark Assessment as Completed">
+                                            <i class="fa-solid fa-check"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('main.delete_assessment', id=assessment.id) }}" class="btn btn-danger btn-sm" title="Delete Assessment">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assessmentDetailsModal" tabindex="-1" aria-labelledby="assessmentDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assessmentDetailsModalLabel">Assessment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="assessment">
+                    <div class="mb-3 details-head">
+                        <div>
+                            <strong>Title:</strong> <span id="title"></span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success">Completed</span>
+                            <span class="badge bg-danger">Incomplete</span>
+                        </div>
+                    </div>
+                    <div class="mb-3"> <strong>Module Code:</strong> <span id="module_code"></span></div>
+                    <div class="mb-3"> <strong>Deadline:</strong> <span id="deadline"></span></div>
+                    <div class="mb-3"> <strong>Description:</strong> <span id="description"></span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).on('click', '.view_details', function() {
+        var assessment_id = $(this).data('id');
+        $.ajax({
+            url: '/get_assessment_details',
+            type: 'POST',
+            data: {
+                assessment_id: assessment_id
+            },
+            success: function(response) {
+                var assessment = response.assessment;
+                $('#title').text(assessment.title);
+                $('#module_code').text(assessment.module_code);
+                $('#deadline').text(assessment.deadline);
+                $('#description').text(assessment.description);
+
+                if (assessment.completed) {
+                    $('#assessmentDetailsModal .badge.bg-success').removeClass('d-none');
+                    $('#assessmentDetailsModal .badge.bg-danger').addClass('d-none');
+                } else {
+                    $('#assessmentDetailsModal .badge.bg-danger').removeClass('d-none');
+                    $('#assessmentDetailsModal .badge.bg-success').addClass('d-none');
+                }
+
+                $('#assessmentDetailsModal').modal('show');
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+
